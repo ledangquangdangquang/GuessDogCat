@@ -5,11 +5,15 @@
 #include <fstream>
 #include <set>
 #include <opencv2/opencv.hpp>
+#include <QTimer>
+#include <QDateTime>
 #include <opencv2/dnn.hpp>
 #include <wiringPi.h>
 using namespace cv;
 using namespace cv::dnn;
 using namespace std;
+#define BUTTON_PIN_DOG 5
+#define BUTTON_PIN_CAT 6
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -22,6 +26,35 @@ MainWindow::MainWindow(QWidget *parent)
     pinMode(4, OUTPUT);
     digitalWrite(1, LOW);
     digitalWrite(4, LOW);
+    // Khởi tạo button
+    pinMode(BUTTON_PIN_DOG, INPUT);
+    pullUpDnControl(BUTTON_PIN_DOG, PUD_UP); // không nhấn = HIGH, nhấn = LOW
+    pinMode(BUTTON_PIN_CAT, INPUT);
+    pullUpDnControl(BUTTON_PIN_CAT, PUD_UP); // không nhấn = HIGH, nhấn = LOW
+
+    // Timer để đọc trạng thái nút bấm
+    QTimer *buttonTimer = new QTimer(this);
+    connect(buttonTimer, &QTimer::timeout, this, [this](){
+        static int lastDog = HIGH, lastCat = HIGH;
+        static qint64 lastChangeDog = 0, lastChangeCat = 0;
+        qint64 now = QDateTime::currentMSecsSinceEpoch();
+
+        int stateDog = digitalRead(BUTTON_PIN_DOG);
+        if (stateDog != lastDog && (now - lastChangeDog) > 50) {
+            lastDog = stateDog;
+            lastChangeDog = now;
+            if (stateDog == LOW) on_dog_clicked();
+        }
+
+        int stateCat = digitalRead(BUTTON_PIN_CAT);
+        if (stateCat != lastCat && (now - lastChangeCat) > 50) {
+            lastCat = stateCat;
+            lastChangeCat = now;
+            if (stateCat == LOW) on_cat_clicked();
+        }
+    });
+    buttonTimer->start(10);
+
     // Load model ONNX
     net = readNetFromONNX("/home/pi/models/squeezenet1.1-7.onnx");
     if (net.empty()) {
@@ -46,7 +79,7 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
-}
+};
 
 // Hiển thị ảnh hiện tại
 void MainWindow::showCurrentImage() {
