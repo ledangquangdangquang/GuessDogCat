@@ -14,18 +14,19 @@ using namespace cv::dnn;
 using namespace std;
 #define BUTTON_PIN_DOG 5
 #define BUTTON_PIN_CAT 6
-
-MainWindow::MainWindow(QWidget *parent)
+#define BUTTON_TRUE 1
+#define BUTTON_FALSE 4
+ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     // Load Wiring Pi
     wiringPiSetup();
-    pinMode(1, OUTPUT);
-    pinMode(4, OUTPUT);
-    digitalWrite(1, LOW);
-    digitalWrite(4, LOW);
+    pinMode(BUTTON_TRUE, OUTPUT);
+    pinMode(BUTTON_FALSE, OUTPUT);
+    digitalWrite(BUTTON_TRUE, LOW);
+    digitalWrite(BUTTON_FALSE, LOW);
     // Khởi tạo button
     pinMode(BUTTON_PIN_DOG, INPUT);
     pullUpDnControl(BUTTON_PIN_DOG, PUD_UP); // không nhấn = HIGH, nhấn = LOW
@@ -69,7 +70,11 @@ MainWindow::MainWindow(QWidget *parent)
     album = {
         "./images/n02085620_7.jpg",
         "./images/n02085620_199.jpg",
-        "./images/n02085620_588.jpg"
+        "./images/n02085620_588.jpg",
+        "./images/cat123.jpg",
+        "./images/cat124.jpg",
+        "./images/cat133.jpg",
+
     };
     currentIndex = 0;
     selected = 0;
@@ -140,13 +145,13 @@ void MainWindow::classifyCurrentImage() {
     }
     else if (rightAns == selected) {
         ui->ai->setText("Correct");
-        digitalWrite(4, LOW);
-        digitalWrite(1, HIGH);
+        digitalWrite(BUTTON_FALSE, LOW);
+        digitalWrite(BUTTON_TRUE, HIGH);
     }
     else{
         ui->ai->setText("Incorrect");
-        digitalWrite(1, LOW);
-        digitalWrite(4, HIGH);
+        digitalWrite(BUTTON_TRUE, LOW);
+        digitalWrite(BUTTON_FALSE, HIGH);
     }
 
     qDebug() << "Ảnh này là:" << QString::fromStdString(result)
@@ -159,8 +164,8 @@ void MainWindow::on_next_slide_clicked() {
     if (album.isEmpty()) return;
     currentIndex = (currentIndex + 1) % album.size();
     ui->ai->setText("");
-    digitalWrite(1, LOW);
-    digitalWrite(4, LOW);
+    digitalWrite(BUTTON_TRUE, LOW);
+    digitalWrite(BUTTON_FALSE, LOW);
     showCurrentImage();
 }
 
