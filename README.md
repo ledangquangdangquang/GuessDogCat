@@ -4,5 +4,5 @@
 Build it in qt.
 # SCP image 
 ```
-scp -r ./images pi@192.168.30.43:/home/pi
+scp -r ./images pi@192.168.30.43:/usr/local/bin
 ```
