@@ -1,8 +1,10 @@
 <h1 align = "center">Push Button AI: Dog or Cat?</h1>
+<p align = "center">App for raspberry pi</p>
 
 # Feature
-- Ai read image.
+- Ai read image
 - Save in **PostgresSQL server**
+- **GPIO** control
 # Create Database
 ```sql
 -- 1. Tạo database
