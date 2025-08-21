@@ -4,7 +4,9 @@
 #include <QString>
 #include <opencv2/dnn.hpp>
 #include <opencv2/opencv.hpp>
-
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -27,9 +29,10 @@ private:
     QVector<QString> album;
     int currentIndex;
     int selected;
+    QSqlDatabase db;
     void showCurrentImage();
     void classifyCurrentImage();
-
+    void saveResult(const QString &img, int userChoice, const QString &aiAnswer);
     cv::dnn::Net net;
     std::vector<std::string> labels;
 };

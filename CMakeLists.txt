@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql)
 
 # --- OpenCV --------------------
 # Trỏ tới sysroot đã rsync header + CMake config
@@ -65,6 +65,7 @@ if(WIRINGPI_LIB)
         dl
         m
         rt
+        Qt6::Sql
     )
 else()
     message(FATAL_ERROR "Không tìm thấy thư viện wiringPi")

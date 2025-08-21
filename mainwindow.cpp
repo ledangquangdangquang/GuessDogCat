@@ -9,6 +9,9 @@
 #include <QDateTime>
 #include <opencv2/dnn.hpp>
 #include <wiringPi.h>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
 using namespace cv;
 using namespace cv::dnn;
 using namespace std;
@@ -16,11 +19,30 @@ using namespace std;
 #define BUTTON_PIN_CAT 6
 #define BUTTON_TRUE 1
 #define BUTTON_FALSE 4
+/*
+- Thoi gian
+- Ten hinh anh
+- Lua chon cua user
+- Dap an cua AI
+*/
  MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    // Init database
+    db = QSqlDatabase::addDatabase("QPSQL", "mainDb");
+    db.setHostName("192.168.30.165");
+    db.setPort(5432);
+    db.setDatabaseName("guessdogcat_database");
+    db.setUserName("quang");
+    db.setPassword("12345");
+
+    if (!db.open()) {
+        qCritical() << "❌ Cannot connect to DB:" << db.lastError().text();
+    } else {
+        qInfo() << "✅ Connected to DB";
+    }
     // Load Wiring Pi
     wiringPiSetup();
     pinMode(BUTTON_TRUE, OUTPUT);
@@ -69,12 +91,12 @@ using namespace std;
     // Khởi tạo album ảnh (có thể dùng Qt Resource hoặc đường dẫn tương đối)
     album = {
         "./images/n02085620_7.jpg",
+        "./images/cat.123.jpg",
         "./images/n02085620_199.jpg",
+        "./images/n02085620_477.jpg",
         "./images/n02085620_588.jpg",
-        "./images/cat123.jpg",
-        "./images/cat124.jpg",
-        "./images/cat133.jpg",
-
+        "./images/cat.124.jpg",
+        "./images/cat.133.jpg",
     };
     currentIndex = 0;
     selected = 0;
@@ -84,7 +106,24 @@ using namespace std;
 MainWindow::~MainWindow()
 {
     delete ui;
-};
+}
+// Save result in server
+void MainWindow::saveResult(const QString &img, int userChoice, const QString &aiAnswer) {
+    if (!db.isOpen()) return;
+
+    QSqlQuery query(db);
+    query.prepare("INSERT INTO guessdogcat_schema.history (image_name, user_choice, ai_answer) "
+                  "VALUES (:img, :user, :ai)");
+    query.bindValue(":img", img);
+    query.bindValue(":user", (userChoice==1)?"Dog":(userChoice==2)?"Cat":"Other");
+    query.bindValue(":ai", aiAnswer);
+
+    if (!query.exec()) {
+        qWarning() << "Insert failed:" << query.lastError().text();
+    } else {
+        qInfo() << "Saved:" << img << userChoice << aiAnswer;
+    }
+}
 
 // Hiển thị ảnh hiện tại
 void MainWindow::showCurrentImage() {
@@ -153,7 +192,8 @@ void MainWindow::classifyCurrentImage() {
         digitalWrite(BUTTON_TRUE, LOW);
         digitalWrite(BUTTON_FALSE, HIGH);
     }
-
+    QString aiAnswer = QString::fromStdString(result) + " (" + QString::fromStdString(predicted).trimmed() + ")";
+    saveResult(path, selected, aiAnswer);
     qDebug() << "Ảnh này là:" << QString::fromStdString(result)
             << "(model đoán:" << QString::fromStdString(predicted).trimmed() << ")"
             << "Confidence:" << confidence;
